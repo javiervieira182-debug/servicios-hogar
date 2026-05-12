@@ -1,0 +1,976 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#0f1117">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Servicios">
+<meta name="description" content="Gestor de pagos de servicios del hogar">
+<title>Servicios del Hogar</title>
+
+<!-- PWA Manifest inline via JS -->
+<script>
+const manifestData = {
+  name: "Servicios del Hogar",
+  short_name: "Servicios",
+  description: "Gestor de pagos de servicios del hogar",
+  start_url: "./",
+  display: "standalone",
+  background_color: "#0f1117",
+  theme_color: "#0f1117",
+  orientation: "portrait",
+  icons: [
+    { src: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect width='192' height='192' rx='40' fill='%230f1117'/><text x='96' y='130' font-size='100' text-anchor='middle'>🏠</text></svg>", sizes: "192x192", type: "image/svg+xml" },
+    { src: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' rx='100' fill='%230f1117'/><text x='256' y='350' font-size='280' text-anchor='middle'>🏠</text></svg>", sizes: "512x512", type: "image/svg+xml" }
+  ]
+};
+const blob = new Blob([JSON.stringify(manifestData)], {type:'application/manifest+json'});
+const manifestURL = URL.createObjectURL(blob);
+const link = document.createElement('link');
+link.rel = 'manifest';
+link.href = manifestURL;
+document.head.appendChild(link);
+</script>
+
+<!-- Apple touch icon inline SVG -->
+<link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'><rect width='180' height='180' rx='40' fill='%230f1117'/><text x='90' y='125' font-size='95' text-anchor='middle'>🏠</text></svg>">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<style>
+:root {
+  --bg: #0f1117;
+  --surface: #181b23;
+  --surface2: #1e2130;
+  --border: rgba(255,255,255,0.07);
+  --border2: rgba(255,255,255,0.12);
+  --text: #f0f1f5;
+  --text2: #8b8fa8;
+  --text3: #555870;
+  --accent: #e8832a;
+  --accent-dim: rgba(232,131,42,0.12);
+  --accent-border: rgba(232,131,42,0.35);
+  --green: #34c47a;
+  --green-dim: rgba(52,196,122,0.1);
+  --red: #e05252;
+  --red-dim: rgba(224,82,82,0.1);
+  --amber: #f0a500;
+  --amber-dim: rgba(240,165,0,0.1);
+  --blue: #4a9eff;
+  --blue-dim: rgba(74,158,255,0.1);
+  --radius: 14px;
+  --radius-sm: 8px;
+  --font: 'DM Sans', sans-serif;
+  --mono: 'DM Mono', monospace;
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+html, body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 15px;
+  line-height: 1.5;
+  min-height: 100dvh;
+  overscroll-behavior: none;
+}
+
+body {
+  padding-top: max(var(--safe-top), 0px);
+  padding-bottom: calc(80px + var(--safe-bottom));
+}
+
+/* ── HEADER ── */
+.app-header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: rgba(15,17,23,0.88);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--border);
+  padding: 12px 16px 10px;
+}
+
+.header-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.app-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.app-title .icon { font-size: 20px; }
+.app-title h1 { font-size: 17px; font-weight: 500; letter-spacing: -0.3px; }
+
+.add-fab {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 99px;
+  padding: 7px 14px 7px 10px;
+  font-family: var(--font);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: opacity .15s, transform .12s;
+  -webkit-user-select: none;
+}
+.add-fab:active { opacity: .85; transform: scale(0.97); }
+.add-fab svg { width: 16px; height: 16px; }
+
+/* Month nav */
+.month-nav {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.month-nav .lbl {
+  flex: 1;
+  text-align: center;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text);
+}
+
+.mnav-btn {
+  width: 32px; height: 32px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text2);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  transition: background .12s;
+  -webkit-user-select: none;
+}
+.mnav-btn:active { background: var(--border2); }
+
+/* ── STATS ── */
+.stats {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  padding: 14px 16px;
+}
+
+.stat-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px 14px;
+}
+
+.stat-label {
+  font-size: 11px;
+  color: var(--text3);
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  margin-bottom: 4px;
+}
+
+.stat-value {
+  font-size: 24px;
+  font-weight: 300;
+  letter-spacing: -1px;
+  font-family: var(--mono);
+}
+.stat-value.total { color: var(--text); }
+.stat-value.warn { color: var(--amber); }
+.stat-value.danger { color: var(--red); }
+.stat-value.ok { color: var(--green); }
+
+/* ── SECTION ── */
+.section {
+  padding: 0 16px;
+  margin-bottom: 6px;
+}
+
+.section-title {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text3);
+  text-transform: uppercase;
+  letter-spacing: .07em;
+  margin: 20px 0 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.section-title::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+/* ── SERVICE CARD ── */
+.svc-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  margin-bottom: 8px;
+  overflow: hidden;
+  transition: border-color .15s;
+}
+.svc-card.overdue { border-color: rgba(224,82,82,.3); }
+.svc-card.soon { border-color: rgba(240,165,0,.25); }
+.svc-card.synced-cal { border-color: rgba(74,158,255,.2); }
+
+.svc-main {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 14px;
+}
+
+.svc-emoji {
+  width: 40px; height: 40px;
+  border-radius: var(--radius-sm);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.svc-body { flex: 1; min-width: 0; }
+.svc-name { font-size: 14px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.svc-sub { font-size: 12px; color: var(--text3); margin-top: 1px; }
+
+.svc-right { text-align: right; flex-shrink: 0; }
+.svc-amount {
+  font-family: var(--mono);
+  font-size: 15px;
+  font-weight: 500;
+  letter-spacing: -0.5px;
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 10px;
+  font-weight: 500;
+  padding: 2px 7px;
+  border-radius: 99px;
+  margin-top: 3px;
+}
+.pill.overdue { background: var(--red-dim); color: var(--red); }
+.pill.soon { background: var(--amber-dim); color: var(--amber); }
+.pill.ok { background: var(--green-dim); color: var(--green); }
+.pill.cal { background: var(--blue-dim); color: var(--blue); }
+
+/* Card actions bar */
+.svc-actions {
+  display: flex;
+  border-top: 1px solid var(--border);
+}
+
+.act-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 9px 4px;
+  background: transparent;
+  border: none;
+  border-right: 1px solid var(--border);
+  color: var(--text2);
+  font-family: var(--font);
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background .12s, color .12s;
+  -webkit-user-select: none;
+}
+.act-btn:last-child { border-right: none; }
+.act-btn:active { background: var(--border); }
+.act-btn svg { width: 14px; height: 14px; flex-shrink: 0; }
+.act-btn.paid-active { color: var(--green); }
+.act-btn.cal-active { color: var(--blue); }
+.act-btn.del { color: var(--red); opacity: .6; }
+.act-btn.del:active { opacity: 1; }
+
+/* ── EMPTY STATE ── */
+.empty-state {
+  text-align: center;
+  padding: 2.5rem 1rem;
+  color: var(--text3);
+  font-size: 14px;
+}
+.empty-state .big { font-size: 32px; margin-bottom: 8px; }
+
+/* ── TOAST ── */
+.toast-wrap {
+  position: fixed;
+  top: max(env(safe-area-inset-top, 0px), 0px);
+  left: 0; right: 0;
+  display: flex;
+  justify-content: center;
+  padding: 12px 16px 0;
+  z-index: 200;
+  pointer-events: none;
+}
+
+.toast {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+  border-radius: 99px;
+  padding: 10px 18px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text);
+  max-width: 340px;
+  opacity: 0;
+  transform: translateY(-8px);
+  transition: opacity .2s, transform .2s;
+  pointer-events: auto;
+}
+.toast.show { opacity: 1; transform: translateY(0); }
+.toast.success { border-color: rgba(52,196,122,.3); }
+.toast.error { border-color: rgba(224,82,82,.3); color: var(--red); }
+
+.toast-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: var(--accent);
+}
+.toast.success .toast-dot { background: var(--green); }
+.toast.error .toast-dot { background: var(--red); }
+.spin-dot {
+  width: 14px; height: 14px;
+  border: 2px solid var(--border2);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin .7s linear infinite;
+  flex-shrink: 0;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── BOTTOM NAV (decorativo) ── */
+.bottom-bar {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  height: calc(60px + var(--safe-bottom));
+  background: rgba(15,17,23,0.94);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-bottom: var(--safe-bottom);
+}
+.bottom-bar-inner {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text3);
+  font-size: 12px;
+}
+.bottom-bar-inner svg { width: 14px; height: 14px; }
+
+/* ── MODAL SHEET ── */
+.sheet-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  z-index: 100;
+  align-items: flex-end;
+}
+.sheet-overlay.open { display: flex; }
+
+.sheet {
+  width: 100%;
+  background: var(--surface);
+  border-radius: 24px 24px 0 0;
+  border: 1px solid var(--border2);
+  border-bottom: none;
+  padding: 0 0 max(var(--safe-bottom), 16px);
+  max-height: 90dvh;
+  overflow-y: auto;
+  animation: slideUp .25s cubic-bezier(0.32,0.72,0,1);
+}
+@keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+
+.sheet-handle {
+  width: 36px; height: 4px;
+  background: var(--border2);
+  border-radius: 2px;
+  margin: 12px auto 0;
+}
+
+.sheet-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px 12px;
+}
+.sheet-title { font-size: 16px; font-weight: 500; }
+.sheet-close {
+  width: 28px; height: 28px;
+  background: var(--surface2);
+  border: none;
+  border-radius: 50%;
+  color: var(--text2);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+.sheet-body { padding: 0 20px 8px; }
+
+.field { margin-bottom: 14px; }
+.field label {
+  display: block;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text3);
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  margin-bottom: 6px;
+}
+.field input, .field select {
+  width: 100%;
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+  border-radius: var(--radius-sm);
+  padding: 11px 13px;
+  font-family: var(--font);
+  font-size: 15px;
+  color: var(--text);
+  outline: none;
+  -webkit-appearance: none;
+  appearance: none;
+  transition: border-color .15s;
+}
+.field input:focus, .field select:focus { border-color: var(--accent); }
+.field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+.sheet-actions { padding: 12px 20px 0; display: flex; flex-direction: column; gap: 8px; }
+.btn-primary {
+  width: 100%;
+  padding: 14px;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius);
+  font-family: var(--font);
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: opacity .15s;
+  -webkit-user-select: none;
+}
+.btn-primary:active { opacity: .85; }
+.btn-secondary {
+  width: 100%;
+  padding: 13px;
+  background: transparent;
+  color: var(--text2);
+  border: 1px solid var(--border2);
+  border-radius: var(--radius);
+  font-family: var(--font);
+  font-size: 14px;
+  cursor: pointer;
+  -webkit-user-select: none;
+}
+.btn-secondary:active { background: var(--border); }
+
+/* Icon grid */
+.icon-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 8px;
+  margin-top: 4px;
+}
+.icon-opt {
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  background: var(--surface2);
+  border: 2px solid transparent;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: border-color .12s;
+}
+.icon-opt.selected { border-color: var(--accent); }
+
+/* Category select visually */
+.cat-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  margin-top: 4px;
+}
+.cat-opt {
+  padding: 10px;
+  background: var(--surface2);
+  border: 2px solid transparent;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--text2);
+  text-align: center;
+  transition: border-color .12s, color .12s;
+}
+.cat-opt.selected { border-color: var(--accent); color: var(--text); }
+
+/* Stagger animation for cards */
+.svc-card {
+  animation: fadeIn .2s ease both;
+}
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+</style>
+</head>
+<body>
+
+<div class="toast-wrap">
+  <div class="toast" id="toast" role="status" aria-live="polite">
+    <div class="spin-dot" id="toast-spin"></div>
+    <span id="toast-msg">Cargando...</span>
+  </div>
+</div>
+
+<header class="app-header">
+  <div class="header-top">
+    <div class="app-title">
+      <span class="icon">🏠</span>
+      <h1>Servicios</h1>
+    </div>
+    <button class="add-fab" onclick="openSheet()" aria-label="Agregar servicio">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="8" y1="2" x2="8" y2="14"/><line x1="2" y1="8" x2="14" y2="8"/></svg>
+      Agregar
+    </button>
+  </div>
+  <div class="month-nav">
+    <button class="mnav-btn" onclick="chMonth(-1)" aria-label="Mes anterior">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><polyline points="10 4 6 8 10 12"/></svg>
+    </button>
+    <span class="lbl" id="mlabel">Mayo 2025</span>
+    <button class="mnav-btn" onclick="chMonth(1)" aria-label="Mes siguiente">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><polyline points="6 4 10 8 6 12"/></svg>
+    </button>
+  </div>
+</header>
+
+<!-- Stats -->
+<div class="stats">
+  <div class="stat-card" style="grid-column:1/-1">
+    <div class="stat-label">Total del mes</div>
+    <div class="stat-value total" id="st-total">$0</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Pendientes</div>
+    <div class="stat-value warn" id="st-pend">0</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Vencidos</div>
+    <div class="stat-value danger" id="st-over">0</div>
+  </div>
+</div>
+
+<!-- Lists -->
+<div class="section">
+  <div class="section-title" id="sec-urgent-title">Urgentes</div>
+  <div id="urgent-list"></div>
+
+  <div class="section-title" id="sec-ok-title">Al día</div>
+  <div id="ok-list"></div>
+</div>
+
+<!-- Bottom bar -->
+<div class="bottom-bar">
+  <div class="bottom-bar-inner">
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="2" y="3" width="12" height="11" rx="2"/><line x1="5" y1="1" x2="5" y2="5"/><line x1="11" y1="1" x2="11" y2="5"/><line x1="2" y1="7" x2="14" y2="7"/></svg>
+    <span id="today-label"></span>
+  </div>
+</div>
+
+<!-- Sheet modal -->
+<div class="sheet-overlay" id="sheet-overlay" onclick="maybeClose(event)">
+  <div class="sheet" id="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-header">
+      <span class="sheet-title" id="sheet-title">Nuevo servicio</span>
+      <button class="sheet-close" onclick="closeSheet()" aria-label="Cerrar">✕</button>
+    </div>
+    <div class="sheet-body">
+      <div class="field">
+        <label>Nombre</label>
+        <input type="text" id="f-name" placeholder="Ej: Electricidad, Netflix..." autocomplete="off">
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>Importe ($)</label>
+          <input type="number" id="f-amount" placeholder="18500" inputmode="numeric">
+        </div>
+        <div class="field">
+          <label>Día de vencimiento</label>
+          <input type="number" id="f-day" min="1" max="31" placeholder="10" inputmode="numeric">
+        </div>
+      </div>
+      <div class="field">
+        <label>Ícono</label>
+        <div class="icon-grid" id="icon-grid"></div>
+      </div>
+      <div class="field">
+        <label>Categoría</label>
+        <div class="cat-grid" id="cat-grid"></div>
+      </div>
+    </div>
+    <div class="sheet-actions">
+      <button class="btn-primary" onclick="saveService()">Guardar servicio</button>
+      <button class="btn-secondary" onclick="closeSheet()">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── DATA ──
+const MONTHS = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+const MS = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+const ICONS = ['⚡','💧','🔥','🌐','📺','📱','🏢','🔒','🎬','🏥','🚗','📦'];
+const CATS = [
+  { id:'servicios', label:'Servicios básicos' },
+  { id:'internet',  label:'Internet / TV' },
+  { id:'expensas',  label:'Expensas / ABL' },
+  { id:'seguro',    label:'Seguros' },
+  { id:'suscripcion', label:'Suscripciones' },
+  { id:'otro',      label:'Otro' },
+];
+const IBGS = {
+  servicios:'rgba(240,165,0,0.15)',
+  internet:'rgba(74,158,255,0.15)',
+  seguro:'rgba(160,130,255,0.15)',
+  expensas:'rgba(52,196,122,0.15)',
+  suscripcion:'rgba(232,131,42,0.15)',
+  otro:'rgba(139,143,168,0.12)',
+};
+
+const now = new Date();
+let vY = now.getFullYear(), vM = now.getMonth();
+let editId = null, selIcon = '⚡', selCat = 'servicios', nextId = 1;
+
+let services = JSON.parse(localStorage.getItem('sh_srv') || 'null') || [
+  {id:1, name:'Electricidad', amount:18500, day:10, category:'servicios', icon:'⚡'},
+  {id:2, name:'Internet',     amount:12000, day:15, category:'internet',  icon:'🌐'},
+  {id:3, name:'Expensas',     amount:45000, day:5,  category:'expensas',  icon:'🏢'},
+  {id:4, name:'Prepaga',      amount:98000, day:20, category:'seguro',    icon:'🏥'},
+  {id:5, name:'Netflix',      amount:4200,  day:22, category:'suscripcion',icon:'🎬'},
+];
+let paid     = JSON.parse(localStorage.getItem('sh_paid') || '{}');
+let calKeys  = JSON.parse(localStorage.getItem('sh_cal')  || '{}');
+nextId = Math.max(...services.map(s=>s.id), 0) + 1;
+
+function persist() {
+  localStorage.setItem('sh_srv',  JSON.stringify(services));
+  localStorage.setItem('sh_paid', JSON.stringify(paid));
+  localStorage.setItem('sh_cal',  JSON.stringify(calKeys));
+}
+
+function pkey(id,y,m) { return `${id}_${y}_${m}`; }
+function ckey(id,y,m) { return `c_${id}_${y}_${m}`; }
+
+function dueStatus(day) {
+  if (vY !== now.getFullYear() || vM !== now.getMonth()) return 'ok';
+  const t = now.getDate();
+  if (t > day) return 'overdue';
+  if (day - t <= 5) return 'soon';
+  return 'ok';
+}
+
+function fmt(n) {
+  return '$' + Math.round(n).toLocaleString('es-AR');
+}
+
+// ── TOAST ──
+let toastTimer = null;
+function showToast(msg, type = 'loading', dur = 0) {
+  const el = document.getElementById('toast');
+  const sp = document.getElementById('toast-spin');
+  document.getElementById('toast-msg').textContent = msg;
+  el.className = 'toast show ' + type;
+  sp.style.display = type === 'loading' ? 'block' : 'none';
+  if (toastTimer) clearTimeout(toastTimer);
+  if (dur > 0) toastTimer = setTimeout(() => { el.className = 'toast'; }, dur);
+}
+function hideToast() { document.getElementById('toast').className = 'toast'; }
+
+// ── RENDER ──
+function render() {
+  document.getElementById('mlabel').textContent = `${MONTHS[vM]} ${vY}`;
+  document.getElementById('today-label').textContent =
+    now.toLocaleDateString('es-AR', { weekday:'long', day:'numeric', month:'long' });
+
+  let total=0, pending=0, overdueC=0, paidC=0;
+  const urgent=[], ok=[];
+
+  services.forEach((s, i) => {
+    const pk = pkey(s.id, vY, vM);
+    const ck = ckey(s.id, vY, vM);
+    const isPaid = !!paid[pk];
+    const isCal  = !!calKeys[ck];
+    const st = dueStatus(s.day);
+    total += s.amount;
+    if (isPaid) paidC++;
+    else if (st === 'overdue') overdueC++;
+    else pending++;
+    const card = mkCard(s, isPaid, isCal, st, i);
+    (!isPaid && (st === 'overdue' || st === 'soon')) ? urgent.push(card) : ok.push(card);
+  });
+
+  document.getElementById('st-total').textContent = fmt(total);
+  document.getElementById('st-pend').textContent = pending;
+  document.getElementById('st-over').textContent = overdueC;
+
+  const ul = document.getElementById('urgent-list');
+  const ol = document.getElementById('ok-list');
+  ul.innerHTML = ''; ol.innerHTML = '';
+
+  if (!urgent.length) ul.innerHTML = '<div class="empty-state"><div class="big">🎉</div>Sin vencimientos urgentes</div>';
+  if (!ok.length) ol.innerHTML = '<div class="empty-state"><div class="big">📋</div>Sin servicios aquí</div>';
+
+  urgent.forEach((c,i) => { c.style.animationDelay = `${i*40}ms`; ul.appendChild(c); });
+  ok.forEach((c,i)     => { c.style.animationDelay = `${i*40}ms`; ol.appendChild(c); });
+}
+
+function mkCard(s, isPaid, isCal, st, idx) {
+  const card = document.createElement('div');
+  const cardSt = isPaid ? 'ok' : st;
+  card.className = `svc-card ${cardSt}${isCal ? ' synced-cal' : ''}`;
+
+  const labelText = isPaid ? 'Pagado'
+    : st === 'overdue' ? `Vencido el ${s.day}/${MS[vM]}`
+    : st === 'soon'    ? `Vence el ${s.day}/${MS[vM]}`
+    :                    `Día ${s.day}/${MS[vM]}`;
+  const labelCls = isPaid ? 'ok' : st === 'overdue' ? 'overdue' : st === 'soon' ? 'soon' : 'ok';
+  const ibg = IBGS[s.category] || IBGS.otro;
+
+  card.innerHTML = `
+    <div class="svc-main">
+      <div class="svc-emoji" style="background:${ibg}">${s.icon}</div>
+      <div class="svc-body">
+        <div class="svc-name">${s.name}</div>
+        <div class="svc-sub">Día ${s.day} de cada mes</div>
+      </div>
+      <div class="svc-right">
+        <div class="svc-amount">${fmt(s.amount)}</div>
+        <div>
+          <span class="pill ${labelCls}">${labelText}</span>
+          ${isCal ? '<span class="pill cal">📅 Calendar</span>' : ''}
+        </div>
+      </div>
+    </div>
+    <div class="svc-actions">
+      <button class="act-btn ${isPaid ? 'paid-active' : ''}" onclick="togglePaid(${s.id})">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 8 6.5 12 13 4"/></svg>
+        ${isPaid ? 'Pagado' : 'Marcar pagado'}
+      </button>
+      <button class="act-btn ${isCal ? 'cal-active' : ''}" onclick="addCal(${s.id})">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="12" height="11" rx="2"/><line x1="5" y1="1" x2="5" y2="5"/><line x1="11" y1="1" x2="11" y2="5"/><line x1="2" y1="7" x2="14" y2="7"/>${isCal ? '<polyline points="5 10 7 12 11 8"/>' : '<line x1="8" y1="10" x2="8" y2="13"/><line x1="6.5" y1="11.5" x2="9.5" y2="11.5"/>'}</svg>
+        ${isCal ? 'En Calendar' : 'Agregar'}
+      </button>
+      <button class="act-btn" onclick="editSvc(${s.id})">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M11 2.5l2.5 2.5-8 8H3v-2.5l8-8z"/></svg>
+        Editar
+      </button>
+      <button class="act-btn del" onclick="delSvc(${s.id})">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 5 13 5"/><path d="M6 5V3h4v2"/><path d="M5 5l.8 8h4.4l.8-8"/></svg>
+        Borrar
+      </button>
+    </div>`;
+  return card;
+}
+
+// ── ACTIONS ──
+function togglePaid(id) {
+  const k = pkey(id, vY, vM);
+  if (paid[k]) delete paid[k]; else paid[k] = true;
+  persist(); render();
+}
+
+function addCal(id) {
+  const s = services.find(x => x.id === id);
+  if (!s) return;
+  const ck = ckey(id, vY, vM);
+  if (calKeys[ck]) { showToast('Ya está en Google Calendar', 'success', 2500); return; }
+
+  // Build Google Calendar URL
+  const y = vY, m = String(vM+1).padStart(2,'0'), d = String(s.day).padStart(2,'0');
+  const dateStr = `${y}${m}${d}`;
+  const nd = new Date(y, vM, s.day+1);
+  const endStr = `${nd.getFullYear()}${String(nd.getMonth()+1).padStart(2,'0')}${String(nd.getDate()).padStart(2,'0')}`;
+  const title = encodeURIComponent(`Pagar ${s.name} – ${fmt(s.amount)}`);
+  const details = encodeURIComponent(`Vencimiento mensual: ${s.name}\nImporte: ${fmt(s.amount)}`);
+  const url = `https://calendar.google.com/calendar/r/eventedit?text=${title}&dates=${dateStr}/${endStr}&details=${details}&sf=true`;
+
+  window.open(url, '_blank');
+  calKeys[ck] = true;
+  persist();
+  showToast(`Abriendo Google Calendar para ${s.name}...`, 'success', 3000);
+  setTimeout(() => render(), 300);
+}
+
+function editSvc(id) {
+  const s = services.find(x => x.id === id);
+  if (!s) return;
+  editId = id;
+  document.getElementById('sheet-title').textContent = 'Editar servicio';
+  document.getElementById('f-name').value = s.name;
+  document.getElementById('f-amount').value = s.amount;
+  document.getElementById('f-day').value = s.day;
+  selIcon = s.icon;
+  selCat  = s.category;
+  updateIconGrid(); updateCatGrid();
+  openSheet();
+}
+
+function delSvc(id) {
+  const s = services.find(x => x.id === id);
+  if (!s) return;
+  if (!confirm(`¿Eliminar "${s.name}"?`)) return;
+  services = services.filter(x => x.id !== id);
+  persist(); render();
+}
+
+function saveService() {
+  const name   = document.getElementById('f-name').value.trim();
+  const amount = parseFloat(document.getElementById('f-amount').value) || 0;
+  const day    = parseInt(document.getElementById('f-day').value) || 1;
+  if (!name || !day) { showToast('Completá nombre y día de vencimiento', 'error', 3000); return; }
+  if (editId) {
+    const i = services.findIndex(s => s.id === editId);
+    if (i >= 0) services[i] = { ...services[i], name, amount, day, icon: selIcon, category: selCat };
+  } else {
+    services.push({ id: nextId++, name, amount, day, category: selCat, icon: selIcon });
+  }
+  persist(); render(); closeSheet();
+  showToast(editId ? 'Servicio actualizado' : 'Servicio agregado', 'success', 2500);
+  editId = null;
+}
+
+function chMonth(dir) {
+  vM += dir;
+  if (vM < 0)  { vM = 11; vY--; }
+  if (vM > 11) { vM = 0;  vY++; }
+  render();
+}
+
+// ── SHEET ──
+function openSheet() {
+  if (!editId) {
+    document.getElementById('sheet-title').textContent = 'Nuevo servicio';
+    document.getElementById('f-name').value = '';
+    document.getElementById('f-amount').value = '';
+    document.getElementById('f-day').value = '';
+    selIcon = '⚡'; selCat = 'servicios';
+    updateIconGrid(); updateCatGrid();
+  }
+  document.getElementById('sheet-overlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+  setTimeout(() => document.getElementById('f-name').focus(), 300);
+}
+
+function closeSheet() {
+  document.getElementById('sheet-overlay').classList.remove('open');
+  document.body.style.overflow = '';
+  editId = null;
+}
+
+function maybeClose(e) {
+  if (e.target === document.getElementById('sheet-overlay')) closeSheet();
+}
+
+// ── ICON / CAT GRIDS ──
+function buildIconGrid() {
+  const grid = document.getElementById('icon-grid');
+  ICONS.forEach(ic => {
+    const d = document.createElement('div');
+    d.className = 'icon-opt' + (ic === selIcon ? ' selected' : '');
+    d.textContent = ic;
+    d.onclick = () => { selIcon = ic; updateIconGrid(); };
+    grid.appendChild(d);
+  });
+}
+
+function updateIconGrid() {
+  document.querySelectorAll('.icon-opt').forEach(el => {
+    el.classList.toggle('selected', el.textContent === selIcon);
+  });
+}
+
+function buildCatGrid() {
+  const grid = document.getElementById('cat-grid');
+  CATS.forEach(c => {
+    const d = document.createElement('div');
+    d.className = 'cat-opt' + (c.id === selCat ? ' selected' : '');
+    d.textContent = c.label;
+    d.onclick = () => { selCat = c.id; updateCatGrid(); };
+    grid.appendChild(d);
+  });
+}
+
+function updateCatGrid() {
+  document.querySelectorAll('.cat-opt').forEach((el, i) => {
+    el.classList.toggle('selected', CATS[i].id === selCat);
+  });
+}
+
+// ── PWA SERVICE WORKER ──
+if ('serviceWorker' in navigator) {
+  const swCode = `
+    const CACHE = 'sh-v1';
+    self.addEventListener('install', e => {
+      e.waitUntil(caches.open(CACHE).then(c => c.addAll(['./'])));
+      self.skipWaiting();
+    });
+    self.addEventListener('activate', e => {
+      e.waitUntil(caches.keys().then(keys =>
+        Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))
+      ));
+      self.clients.claim();
+    });
+    self.addEventListener('fetch', e => {
+      e.respondWith(
+        caches.match(e.request).then(r => r || fetch(e.request).catch(() => caches.match('./')))
+      );
+    });
+  `;
+  const swBlob = new Blob([swCode], { type: 'application/javascript' });
+  const swURL  = URL.createObjectURL(swBlob);
+  navigator.serviceWorker.register(swURL).catch(() => {});
+}
+
+// ── INIT ──
+buildIconGrid();
+buildCatGrid();
+render();
+</script>
+</body>
+</html>
